@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+      .body {
+        background-color: AliceBlue;
+      }
+      .odd {
+         color: darkgreen;
+      }
+      .even {
+         color : Navy; 
+      }     
+      .jumbotron {
+         color : White !important;
+         background-color : RoyalBlue !important;
+         padding-top: 1px !important;
+         padding-bottom: 1px !important;
+      }
+      .note {
+        font-size: 16px !important;
+        font-weight : normal;
+      }
+      .question {
+        font-size: 16px;
+        padding-top: 1em;
+        font-weight : bold;
+      }
+      .question1 {
+        font-size: 16px;
+        font-weight : bold;
+      }
+      .form-check {
+        padding-left: 5em;
+        display : block;
+      }
+      .form-check-label {
+        padding-right: 2em;
+        font-weight: normal;
+      }
+      .heading1 {
+        font-size: 30px !important;
+        font-weight : bold;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="surveyForm" action="https://docs.google.com/forms/u/1/d/e/1FAIpQLScrBnV2elrLSTt5QzJrEct3xfxGSzKOWkl6cvAO-4T6g00KYg/formResponse" method="post">
+    <div class = "container">  
+    <div class="jumbotron" style = "color : White; background-color : RoyalBlue;">
+      <h1 class="heading1">Relax to Remember!</h1>
+      <p class="note">This is an experiment to see if hearing an audio can have an impact on memory recall. Here are some simple steps you need to do to take part in this experiment: <br>
+        0. Turn on your audio and set the volume to a level comfortable to your ear. Use a headset or move to a quiet room.<br>
+        1. Answer a few simple questions. <br>
+        2. Play a number game to check your digit span score. 
+        <span class="glyphicon glyphicon-volume-down" style="color: yellow;"></span><br>
+        3. Listen to the provided audio clip until it stops playing. <b>You may hear noisy and/or calming audio.</b>
+        <span class="glyphicon glyphicon-volume-down" style="color: yellow;"></span><br>
+        4. Play the number game again! 
+        <span class="glyphicon glyphicon-volume-down" style="color: yellow;"></span><br>
+      </p>
+      <p class="note" style="text-align:right;"><span class="glyphicon glyphicon-volume-down" style="color: yellow;"></span> <i>indicates the step requires audio to be on!</i><br></p>
+    </div>
+
+    <div class = "panel panel-default" id="info-section">
+      <div class="panel-heading" style="color : White; background-color : RoyalBlue;"><h3>1. Tell us about yourself</h3></div>
+      <div class="panel-body">
+          <p class="question">What is your name?</p>
+          <div class="form-check">
+            <input type="text" value="" id="name" name="entry.225858306" required
+                  placeholder="Enter your name" style=" width : 60%; text-align:left; font-size : 16px;"/> <br>
+            
+          </div>
+
+          <p class="question">What is your gender?</p>
+          <div class="form-check" name="entry.1454741015">
+            <input type="radio" class="form-check-input" id="male" name="entry.1454741015" value="Male" required> 
+            <label class="form-check-label" for="male">Male</label>
+            
+            <input type="radio" class="form-check-input" id="female" name="entry.1454741015" value="Female"> 
+            <label class="form-check-label" for="female">Female</label>
+          </div>
+
+          <p  class="question">How old are you?</p>
+          <div class="form-check" name="age">
+              <input type="radio"  class="form-check-input" id="young" name="age" value="5 - 21 years" onclick="setAge(this)" required > 
+              <label class="form-check-label" for="young">5 - 21 years</label>
+              
+              <input type="radio"  class="form-check-input" id="adult" name="age" value="22 - 55 years" onclick="setAge(this)"> 
+              <label class="form-check-label" for="adult">22 - 55 years</label>
+              
+              <input type="radio" class="form-check-input" id="old" name="age" value="Older than 55 years" onclick="setAge(this)"> 
+              <label class="form-check-label" for="old">Older than 55 years</label>
+
+              <input type="text" value="" id="ageGroup" name="entry.2144906349" style="display:none;" required /> <br>
+          </div>
+          
+
+          <p  class="question">How many years of music training (vocal or instrumental) have you had?</p>
+          <div class="form-check" name="entry.1220438971">
+              <input type="radio" class="form-check-input" id="m1" name="entry.1220438971" value="No training" required> 
+              <label class="form-check-label" for="m1">No training</label>
+              
+              <input type="radio" class="form-check-input" id="m2" name="entry.1220438971" value="1-2 years of training"> 
+              <label class="form-check-label" for="m2">1-2 years of training</label>
+              
+              <input type="radio" class="form-check-input" id="m3" name="entry.1220438971" value="3- 5 years of training"> 
+              <label class="form-check-label" for="m3">3- 5 years of training</label>
+              
+              <input type="radio" class="form-check-input" id="m4" name="entry.1220438971" value="more than 5 years of training"> 
+              <label class="form-check-label" for="m4">more than 5 years of training</label>
+          </div>
+
+          
+          <p class="question">What time of the day is it now?</p>
+          <div class="form-check" name="entry.1728616086">
+              <input type="radio" class="form-check-input" id="t1" name="entry.1728616086" value="4 AM - 8 AM" required> 
+              <label class="form-check-label" for="t1">4 AM - 8 AM</label>
+              
+              <input type="radio" class="form-check-input" id="t2" name="entry.1728616086" value="8 AM - Noon"> 
+              <label class="form-check-label" for="t2">8 AM - Noon</label>
+              
+              <input type="radio" class="form-check-input" id="t3" name="entry.1728616086" value="Noon - 4 PM"> 
+              <label class="form-check-label" for="t3">Noon - 4 PM</label>
+              
+              <input type="radio" class="form-check-input" id="t4" name="entry.1728616086" value="4 PM - 8 PM"> 
+              <label class="form-check-label" for="t4">4 PM - 8 PM</label>
+
+              <input type="radio" class="form-check-input" id="t5" name="entry.1728616086" value="8 PM - Midnight"> 
+              <label class="form-check-label" for="t5">8 PM - Midnight</label>
+
+              <input type="radio" class="form-check-input" id="t6" name="entry.1728616086" value="Midnight - 4 AM"> 
+              <label class="form-check-label" for="t6">Midnight - 4 AM</label>
+          </div><br>
+          
+          <p class="note" style="color : blue"><i>If you would like to get a report on this experimental study, please share your email</i></p>
+          <p class="question1">What is your email? (optional)</p>
+          <div class="form-check">
+            <input type="text" value="" id="email" name="entry.711448394"
+                  placeholder="Enter your email" style=" width : 60%; text-align:left; font-size : 16px;"/> <br>
+            
+          </div>
+          <br>
+          <div align="center">
+            <input type="button" value="Next" class="btn btn-primary"  id="btn-sec1" onclick="infoSecComplete()"/><br>
+          </div>
+      </div>
+    </div>
+
+    <div class="panel panel-default" id="game-section-pre" >
+      <div class="panel-heading" style="color : White; background-color : RoyalBlue;">
+      <h3>2. Play a Memory Game (Keep your audio and headset on)</h3></div>
+      <ol class="note">
+        <li>Click on 'Start Game' button to start the game. You will hear numbers read out aloud.<b> Wait for all the numbers to be read </b></li>
+        <li>Enter the digits read out in the same sequence (no commas or spaces) and click the Enter/Tab key or the 'Check Answer and Move to Next Level' button.</li>
+        <li>If your sequence is correct, you move to the next round of the game. If your sequence is wrong, the game ends.</li>
+      </ol>
+      <div class="panel-body">
+        <div class="panel-group" align="center">
+          <p class="note" style="color : blue"><i>We consider all scores prefect. So have fun and enjoy the game!</i></p>
+          <br>
+            <input type="button" value="Start Game" class="btn btn-success"  id="pre-start-game" onclick="startGame('pre-')"/><br>
+            <div class= "panel">
+              <input class="alert odd" type="text" value="" id="pre-digit" readonly="true" 
+                     style=" width : 70%; font-size:40px; font-weight : bold; text-align:center;" /> <br>
+            </div>
+          
+            <div class="panel">
+              <div id="pre-answer-ctrl">
+                <label for="pre-answer">Enter the digits (in order): </label>
+                <input type="text" value="" id="pre-answer" onchange="checkNumber('pre-')"
+                    placeholder="Enter the digits in the correct order" style=" width : 60%; text-align:left; font-size : 16px; background-color: #FCF3CF ;"/> 
+              </div>
+              <br>
+              
+              
+              <input type="button" value="Check and Move to Next Level" class="btn btn-primary"  id="pre-check-answer" onclick="checkNumber('pre-')"/>
+              <span id="pre-ans-right" class="glyphicon glyphicon-ok" style="color: green;"></span>
+              <span id="pre-ans-wrong" class="glyphicon glyphicon-remove" style="color: red;"></span>
+              <br>
+              
+              <input class="active alert-danger" type="text" value="Game Ended!" id="pre-ended" readonly="true"
+                  style=" width : 70%; font-size:40px; font-weight : bold; text-align:center;" /> <br>
+            </div>
+            <div class="panel">
+              <label for="pre-score">Your Score: </label>
+              <input type="text" value="" id="pre-score" name="entry.1901550207"
+                  readonly="true" /> 
+              <br>
+            </div>
+          </div>
+      </div>
+      <div align="center">
+          <input type="button" value="Next" class="btn btn-primary"  id="btn-sec2" onclick="preSecComplete()"/><br>
+      </div>
+    </div>
+
+    <div class = "panel panel-default" id="audio-section">
+      <div class="panel-heading" style="color : White; background-color : RoyalBlue;"><h3>3. Hear the Audio Clip (Keep your audio and headset on)</h3></div>
+      <div class="panel-body" align="center">
+          <p class="question">Hear the audio clip!</p>
+          <iframe id="audio-clip" width="360" height="240" 
+            src="https://www.youtube.com/embed/Uixm6KPi-ZY?enablejsapi=1&controls=0&start=0&end=10"
+            frameborder="0"></iframe>
+            
+          <input type="text" value="" id="treatment" name="entry.1736190941"
+                  readonly="true" style="display : none;"/> 
+      </div>
+      <div align="center">
+          <input type="button" value="Next" class="btn btn-primary"  id="btn-sec2" onclick="audioSecComplete()"/><br>
+      </div>
+      <br>
+    </div>
+
+    <div class="panel panel-default" id="game-section-post" >
+      <div class="panel-heading" style="color : White; background-color : RoyalBlue;"><h3>4. Play the Memory Game Again! (Keep your audio and headset on)</h3></div>
+      <div class="panel-body">
+        <div class="panel-group" align="center">
+          <br>
+          <input type="button" value="Start Playing" class="btn btn-success"  id="post-start-game" onclick="startGame('post-')"/><br>
+          <div class= "panel">
+            <input class="alert odd" type="text" value="" id="post-digit" readonly="true" 
+                   style=" width : 70%; font-size:40px; font-weight : bold; text-align:center;" /> <br>
+          </div>
+        
+          <div class="panel">
+            <div id="post-answer-ctrl">
+              <label for="post-answer">Enter the digits (in order): </label>
+              <input type="text" value="" id="post-answer" onchange="checkNumber('post-')"
+                  placeholder="Enter the digits in the correct order" style=" width : 60%; text-align:left; font-size : 16px; background-color: #FCF3CF ;"/> 
+            </div><br>
+
+           
+            <input type="button" value="Check and Move to Next Level" class="btn btn-primary"  id="post-check-answer" onclick="checkNumber('post-')"/>
+            <span id="post-ans-right" class="glyphicon glyphicon-ok" style="color: green;"></span>
+            <span id="post-ans-wrong" class="glyphicon glyphicon-remove" style="color: red;"></span>
+            
+            <br>
+            
+            <input class="active alert-danger" type="text" value="Game Ended!" id="post-ended" readonly="true"
+                style=" width : 70%; font-size:40px; font-weight : bold; text-align:center;" /> <br>
+          </div>
+          
+          <div class="panel">
+            <label for="post-score">Your Score: </label>
+            <input type="text" value="" id="post-score" name="entry.1216409237"
+                readonly="true" /> 
+            <br>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div align="center">
+      <button class="btn btn-primary" id="btnSubmit" type="submit" >Submit Form</button>
+    <br><br>
+    </div>
+  </form>
+
+  <!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script> -->
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    var numArr = [];
+    var level = 2;
+    var myscore = 0;
+    var auditory = true;
+    var player;
+    var sections = ["info-section", "audio-section", "game-section-pre", "game-section-post"];
+    var treat_audio = "https://www.youtube.com/embed/8-AW52sy0B4?enablejsapi=1&controls=0&start=0&end=10";
+    var control_audio = "https://www.youtube.com/embed/Uixm6KPi-ZY?enablejsapi=1&controls=0&start=0&end=10";
+    var ageBlock = null;
+    var utterance = new SpeechSynthesisUtterance();
+    
+    //$(function() {
+    $(document).ready(() => {
+        showSection('info-section');
+        $('#pre-score').val(myscore);
+        $('#post-score').val(myscore);
+        $('#btnSubmit').attr("disabled", true);   
+
+        // Browser support messages. (You might need Chrome 33.0 Beta)
+        if (!('speechSynthesis' in window)) {
+          auditory = false;
+        } else {
+          console.log('Browser supports speechSynthesis!')
+        }
+        
+        var voices = window.speechSynthesis.getVoices();
+      });
+
+    window.speechSynthesis.onvoiceschanged = function () {      
+        voices = window.speechSynthesis.getVoices();
+        utterance.voice = voices.filter(function (voice) { return voice.name == 'Google US English'; })[0];
+    }
+
+    function showSection(name) {
+      sections.forEach(sec => {
+        if (sec == name) {
+          $(`#${sec}`).show();
+          if(name == 'game-section-pre') {
+            $('#pre-start-game').attr("disabled", false);
+            $('#pre-ended').hide();
+            resetAnswerStatus('pre-');
+            $('#btn-sec2').attr("disabled", true);
+            level = 2;
+            numArr = [];
+          }  
+          else if (name == 'game-section-post') {
+            $(`#post-start-game`).attr("disabled", false);
+            $('#post-ended').hide();
+            resetAnswerStatus('post-');
+            level = 2;
+            numArr = [];
+          }
+          else if (name === 'info-section') {
+            ageBlock = null;
+          }
+          else if (name === 'audio-section') {
+            myYouTubeIframeAPIReady();
+            //player.playVideo(); 
+          }
+        }
+        else {
+          $(`#${sec}`).hide();
+        }
+      });
+    }
+    
+    function startGame(sec) {
+      $(`#${sec}start-game`).attr("disabled", true);
+      resetAnswerStatus(sec);
+      console.log('Current level is: ', level);
+      
+      for( let i = 1 , p = Promise.resolve(); i <= level; i++) {
+        p = p.then( _ => new Promise(resolve => {
+          console.log('i : ', i, 'level: ', level);
+          
+          disableEnableAnswering(sec);
+          var num = generateRandomDigit(sec).then(() => {
+            console.log(num);
+            numArr.push($(`#${sec}digit`).val());
+            if(auditory) {
+              utterNumber($(`#${sec}digit`).val()).then(() => {
+                waitAWhile(sec, 1000).then( () => {
+                  console.log("Getting Next Digit");
+                  resolve();
+                  disableEnableAnswering(sec);
+                });
+              });
+            }
+            else {
+              $(`#${sec}digit`).show();
+            
+              waitAWhile(sec, 1000).then( () => {
+                console.log("Getting Next Digit");
+                resolve();
+                disableEnableAnswering(sec);
+              });
+            }
+          });
+        }));
+      } 
+    }
+    
+    function disableEnableAnswering(sec) {
+      if(numArr.length !== level) {
+        console.log('Disable Answering: level: ', level, 'numArr: ', numArr.length);
+        //$(`#${sec}answer-ctrl`).hide();
+        $(`#${sec}check-answer`).attr('disabled', true); 
+      } else {
+        console.log('Enable Answering: level: ', level, 'numArr: ', numArr.length);
+        $(`#${sec}answer-ctrl`).show();
+        $(`#${sec}answer`).focus();
+        $(`#${sec}check-answer`).attr('disabled', false); 
+      }
+    }
+    
+    function generateRandomDigit(sec) {
+        return new Promise(resolve => {
+          //$(`#${sec}answer`).disable = true;
+          $(`#${sec}check-answer`).attr('disabled', true);
+          $(`#${sec}digit`).toggleClass("odd even");
+          $(`#${sec}digit`).val(Math.floor(Math.random() * 9));
+          resolve();
+        });
+    }
+    
+    function waitAWhile(sec, ms) {
+      return new Promise(resolve => setTimeout(() => {
+         $(`#${sec}digit`).val('');
+         resolve();
+      }, ms));
+    }
+    
+    function scoreAndSetNextLevel(sec, win) {
+      if(win == true){
+        myscore == 0 ? myscore = 2 : myscore = myscore + 1;
+      } 
+      
+      numArr = [];
+      level = level + 1;
+      $(`#${sec}answer`).val('');
+      $(`#${sec}digit`).val('');
+    }
+    
+    function computeScore(sec, win) {
+        return new Promise(resolve => {
+          resolve(scoreAndSetNextLevel(sec, win));
+        });
+    }
+    
+    function markAnswerRight(sec, right = true) {
+      $(`#${sec}answer-ctrl`).hide();
+      if(right === true) {
+        $(`#${sec}ans-right`).show();
+        $(`#${sec}ans-wrong`).hide();
+      } else {
+        $(`#${sec}ans-right`).hide();
+        $(`#${sec}ans-wrong`).show();
+      }   
+    }
+    
+    function resetAnswerStatus(sec) {
+        $(`#${sec}ans-right`).hide();
+        $(`#${sec}ans-wrong`).hide();  
+        $(`#${sec}answer`).val('');
+        $(`#${sec}digit`).val('');
+        $(`#${sec}answer-ctrl`).hide();
+        if(auditory === false)
+          $(`#${sec}digit`).show();
+        else
+          $(`#${sec}digit`).hide();
+    }
+    
+    function checkNumber(sec) {
+       if($(`#${sec}answer`).val() === '') {
+         return;
+       }
+       var value = $(`#${sec}answer`).val();
+       console.log('value: ', value, 'nums: ', numArr.join(''));
+       if ($(`#${sec}answer`).val() === numArr.join('')) {
+         markAnswerRight(sec);
+         computeScore(sec, true).then( () => {
+           $(`#${sec}score`).val(myscore);
+           console.log('value: ', value, 'nums: ', numArr.join(''));
+           waitAWhile(sec, 1000).then( () => {
+             startGame(sec);
+           });
+         });
+       } else {
+         markAnswerRight(sec, false);
+         level = 0;
+         gameEnded(sec);
+       }
+    }
+    
+    function gameEnded(sec) {
+      $(`#${sec}ended`).show();
+      $(`#${sec}check-answer`).attr('disabled', true); 
+      $(`#${sec}answer`).disabled = true;     
+      $(`#${sec}start-game`).attr("disabled", true);  
+      if(sec === 'post-') {
+        $('#btnSubmit').attr("disabled", false);
+      } else {
+        $('#btn-sec2').attr("disabled", false);
+      }
+      myscore = 0;
+      //google.script.run.setScore(myscore);
+    }
+    
+    function enableGame(event) {
+      console.log('iframe state: ', event.data);
+      if(event.data == YT.PlayerState.ENDED ) {
+        console.log('Clip played. So enable game now');
+        $('#game-panel-post').hidden = true;
+      }
+    }
+    
+    function utterNumber(m) {
+      return new Promise(resolve => {
+        resolve(say(m))
+      });
+    }
+
+    function say(m) {
+        utterance.lang = 'en-US';
+        utterance.volume = 1;
+        utterance.rate = 1;
+        utterance.pitch = 0.8;
+        utterance.text = m;
+        speechSynthesis.speak(utterance);
+    }
+    
+    function myYouTubeIframeAPIReady() {
+      player = new YT.Player('audio-clip', {
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+    
+    function onPlayerReady(event) {
+      console.log('YouTube Player Ready');
+      player.playVideo();
+      //player.addEventListener('onStateChange', onPlayerStateChange);
+    }
+    
+    function onPlayerStateChange(event) {
+      console.log('Player event data: ', event.data);
+      if(event.data == 0) {
+        //The clip has finished playing
+        audioSecComplete();
+        //showSection('game-section-post')
+      } 
+    }
+
+    function audioSecComplete() {
+      showSection('game-section-post');
+    }
+    
+    function infoSecComplete() {
+      console.log('Info sec is Complete')
+      if($('#surveyForm')[0].checkValidity() === false)
+      {
+          event.preventDefault();
+          $("#surveyForm")[0].reportValidity()
+      } else {
+        //event.preventDefault();
+        //Get the block information and set the correct src for the audio
+        showSection('game-section-pre')
+        google.script.run.withSuccessHandler(getAssignment).getTreatment(ageBlock); 
+      }
+    }
+    
+    function preSecComplete() {
+      console.log('Pre Game sec is Complete')
+      showSection('audio-section')
+    }
+    
+    function getAssignment(assign) {
+       console.log('Value of assign: ', assign);
+       $('#treatment').val(assign);
+       if(assign === '1') {
+         console.log('Assigned to treatment. audio-clip changes to: ', treat_audio);
+         $('#audio-clip').attr("src", treat_audio);
+       }
+    }
+    
+    function setAge(myRadio) {
+      ageBlock = myRadio.value;
+      $('#ageGroup').val(myRadio.value);
+    }
+  </script>
+  </body>
+</html>
+
+

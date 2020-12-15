@@ -1,0 +1,469 @@
+---
+title: "Chitra_Project_Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r import}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(stargazer)
+library(lmtest)
+library(sandwich)
+library(foreign)
+library(knitr)
+library(cobalt)
+library(MatchIt)
+```
+
+## Load Data
+
+You can also embed plots, for example:
+
+```{r loadData}
+dt <- fread("data/data_30.csv")
+
+setnames(dt, "Timestamp", "timestamp")
+setnames(dt, "Name", "name")
+setnames(dt, "Gender", "gender")
+setnames(dt, "Age", "age")
+setnames(dt, "Music Training", "music_training")
+setnames(dt, "Pre-treatment Score", "pre_treatment_score")
+setnames(dt, "Post-treatment Score", "post_treatment_score")
+setnames(dt, "Treatment", "treatment")
+setnames(dt, "Email", "email")
+setnames(dt, 'Time of Day', 'time_of_day')
+
+dt[, ]
+
+```
+
+## Data Cleanup
+
+1. Remove duplicate data
+
+``` {r}
+cat('Total number of rows: ', dt[,.N], '\n')
+duplicate_data <- sum(duplicated(dt, by=c('name', 'gender', 'age', 'music_training','pre_treatment_score', 'time_of_day', 'post_treatment_score', 'treatment', 'email' )))
+cat('Number of duplicated rows: ', duplicate_data, '\n')
+
+d <- unique(dt, by = c('name', 'gender', 'age', 'music_training','pre_treatment_score', 'time_of_day', 'post_treatment_score', 'treatment', 'email' ))
+cat('Number of unique rows in dataset: ', d[,.N], '\n')
+d <- d[, 3:9]
+
+# Number in each age group
+d[, .N, by=.(gender, treatment)]
+
+# Number in each time of day
+d[, .N, by=.(time_of_day, treatment)]
+
+# Randomization Check - percentage of dataset in treatment
+d[treatment == 1, .N]/d[,.N]
+d[age == '5 - 21 years' & treatment == 1, .N]/d[age == '5 - 21 years', .N]
+d[age == '22 - 55 years' & treatment == 1, .N]/d[age == '22 - 55 years', .N]
+d[age == 'Older than 55 years' & treatment == 1, .N]/d[age == 'Older than 55 years' , .N]
+```
+
+2. Remove any rows that are incomplete with data. E.g some rows dont have pre treatment or post treatment score because user made an error in data entry
+
+``` {r}
+# Eliminate all rows where pre_treatment score is 0 as these rows are not usable for data analysis
+d[pre_treatment_score == 0, .N]
+d[, .N]
+unique(d[,music_training])
+```
+
+3. Add additional derived columns to help analysis
+
+```{r}
+d[ , score_difference := ((post_treatment_score - pre_treatment_score))]
+d[, score_improved := ifelse (score_difference >= 0, 1, 0)]
+#d[, time := ifelse(time_of_day == '4 AM - 8 AM' | time_of_day == 'Midnight - 4 AM' | time_of_day == '8 PM - Midnight', '8 PM - 8 AM', '8AM - 8PM')]
+#d[, music := ifelse(music_training == '1-2 years of training' | music_training == '3- 5 years of training', '1-5 years of training', music_training)]
+d[,]
+```
+```{r}
+# Convert columns to factors where appropriate
+d[, treatment := as.factor(treatment)]
+d[, age := as.factor(age)]
+#d[, music := as.factor(music)]
+d[, music_training := as.factor(music_training)]
+d[, gender := as.factor(gender)]
+#d[, time := as.factor(time)]
+d[, time_of_day := as.factor(time_of_day)]
+```
+
+```{r HelperMethods}
+reg <- function (model, title = '', ptest = TRUE) {
+  test <- coeftest(model, vcovHC(model, type="HC1"))
+  if(ptest) {
+    print(test)
+    stargazer(test[,], title = title, type='html')
+  }
+  return (list('model' = model, 'test' = test))
+}
+```
+
+## Observations
+
+```{r}
+library(gridExtra)
+# Draw box plots of treatment and control for each age block
+plot1 <- ggplot(d, aes(x=treatment, y=score_difference)) + geom_boxplot(fill=c("salmon", "turquoise"), alpha=0.5) + ggtitle('All subjects')
+
+# Draw by Age
+plot2 <- ggplot(d[age == '5 - 21 years',], aes(x=treatment, y=score_difference)) + geom_boxplot(fill=c("salmon", "turquoise"), alpha=0.5) + ggtitle('5 - 21 Years')
+plot3 <- ggplot(d[age == '22 - 55 years',], aes(x=treatment, y=score_difference)) + geom_boxplot(fill=c("salmon", "turquoise"), alpha=0.5) + ggtitle('22 - 55 years')
+plot4 <- ggplot(d[age == 'Older than 55 years',], aes(x=treatment, y=score_difference)) + geom_boxplot(fill=c("salmon", "turquoise"), alpha=0.5) + ggtitle('Older than 55 years')
+grid.arrange(plot1 , plot2, plot3 , plot4, ncol = 2, top = 'Score Difference - Control vs Treatment')
+```
+
+### Histograms
+
+```{r}
+plot5 <- ggplot(d, aes (x=pre_treatment_score))+  xlim(0,20) + geom_histogram() + ggtitle('Distribution of pre-treatment score') + geom_vline(xintercept = d[treatment == 1, mean(pre_treatment_score)], col = 'turquoise3', lwd = 1) + geom_vline(xintercept = d[treatment == 0, mean(pre_treatment_score)], col = 'salmon', lwd = 1)
+
+plot6 <- ggplot(d, aes (x=post_treatment_score))+  xlim(0,20) + geom_histogram() + ggtitle('Distribution of post-treatment score') + geom_vline(xintercept = d[treatment == 1, mean(post_treatment_score)], col = 'turquoise3', lwd = 1) +
+  geom_vline(xintercept = d[treatment == 0, mean(post_treatment_score)], col = 'salmon', lwd = 1)
+
+plot7 <- ggplot(d, aes (x=score_difference))+ geom_histogram() + ggtitle('Distribution of score-difference') + geom_vline(xintercept = d[treatment == 1, mean(score_difference)], col = 'turquoise3', lwd = 1) +
+  geom_vline(xintercept = d[treatment == 0, mean(score_difference)], col = 'salmon', lwd = 1)
+
+grid.arrange(plot5, plot6, plot7, ncol = 1, top = 'Histograms of Scores')
+
+```
+
+```{r}
+d[, list(mean_pre = mean(pre_treatment_score), mean_post = mean(post_treatment_score), mean_diff = mean(score_difference)), by = treatment]
+```
+
+## Score Improvement
+
+```{r}
+# Check the number for whose score_diff is >= 0
+cat('People in treatment for whom score increased or stayed same: ', d[treatment == 1 & score_difference >= 0, .N], '\n')
+cat('People in treatment for whom score decreased: ', d[treatment == 1 & score_difference < 0, .N] , '\n')
+cat('People in control for whom score increased or stayed same: ', d[treatment == 0 & score_difference >= 0, .N] , '\n')
+cat('People in control for whom score decreased: ', d[treatment == 0 & score_difference < 0, .N], '\n')
+```
+
+## Initial Analysis
+
+```{r}
+d[, mean(score_improved), by=treatment]
+```
+
+### Power Calculation
+
+``` {r}
+N = 138
+computePower<- function(outcome) {
+  mu_t <- mean(d[treatment == 1, get(outcome)])
+  mu_c <- mean(d[treatment == 0, get(outcome)])
+  mu <- mu_t - mu_c
+  sigma <- sqrt(var(d[, get(outcome)]))
+  cat('Current Tau: ', mu, ' Current sigma: ', sigma, '\n')
+  power <- pnorm((abs(mu)*sqrt(N))/(2*sigma) - qnorm(0.975))
+  return (power)
+}
+
+compute_sigma <- function(outcome) {
+  mu_t <- mean(d[treatment == 1, get(outcome)])
+  mu_c <- mean(d[treatment == 0, get(outcome)])
+  mu <- mu_t - mu_c
+  sigma <- (abs(mu)* sqrt(N))/ (2 *(qnorm(0.80) + qnorm(0.975)))
+  return (sigma)
+}
+
+compute_tau <- function(outcome) {
+  sigma <- sqrt(var(d[, get(outcome)]))
+  tau <- ((qnorm(0.80) + qnorm(0.975))/sqrt(N)) * 2*sigma
+  return (tau)
+}
+
+compute_size<- function(outcome) {
+  mu_t <- mean(d[treatment == 1, get(outcome)])
+  mu_c <- mean(d[treatment == 0, get(outcome)])
+  mu <- mu_t - mu_c
+  sigma <- sqrt(var(d[, get(outcome)]))
+  size <- (((qnorm(0.80) + qnorm(0.975))/mu) * sigma)^2
+  return (size)        
+}
+
+power_calc <- function (outcome) {
+  cat('----------Power Computation and Requirements for ', outcome, '-----------------------\n')
+  cat('Power : ', computePower(outcome), '\n')
+  cat('Sigma needed for 80% power and same treatment effect and size: ', compute_sigma(outcome), '\n' )
+  cat('Treatment effect needed for 80% power and same sigma and size: ', compute_tau(outcome), '\n' )
+  cat('Sample Size needed for 80% power and same treatment effect and sigma: ', compute_size(outcome), '\n' )
+  cat('\n')
+}
+
+power_calc('score_improved')
+power_calc('score_difference')
+power_calc('post_treatment_score')
+
+```
+
+### Draw the plots
+```{r score_improved}
+p1 <- ggplot(data = data.frame(x = c(-1, 1)), aes(x)) +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 0.104, sd = 0.489), col = 'black') +
+  geom_vline(xintercept = 0.104 - 0.489, col = 'black', lwd = 0.3) +
+  geom_vline(xintercept = 0.104 + 0.489, col = 'black', lwd = 0.3) + 
+  geom_text(aes(x=-0.1 , label="\nsigma = 0.489", y = 0.4), colour="black", angle=0, text=element_text(size=8)) + stat_function(fun = dnorm, n = 138, args = list(mean = 0.104, sd = 0.217), col = 'orange', 
+                geom = "area", fill = "orange", alpha = .1) +
+  geom_vline(xintercept = 0.104 - 0.217, col = 'orange', lwd = 0.5, linetype="dashed") +
+  geom_text(aes(x=0.104, label="\nsigma = 0.217", y = 1), colour="orange", angle=0, text=element_text(size=8)) +
+  geom_vline(xintercept = 0.104 + 0.217, col = 'orange', lwd = 0.5, linetype="dashed") + ylab("") +
+  scale_y_continuous(breaks = NULL) +
+  ggtitle('Reduce Variance for same LATE')
+  
+p2 <- ggplot(data = data.frame(x = c(-1, 1.6)), aes(x)) +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 0.104, sd = 0.489), col = 'black') +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 0.234, sd = 0.489), col = 'orange',
+                geom = "area", fill = "orange", alpha = .1) + ylab("") +
+  geom_vline(xintercept = 0.234, col = 'orange', lwd = 0.5,  linetype="dashed") +
+  #geom_vline(xintercept = 0.234 - 0.489, col = 'orange', lwd = 1, linetype="dotted") +
+  #geom_vline(xintercept = 0.234 + 0.489, col = 'orange', lwd = 1, linetype="dotted") +
+  geom_vline(xintercept = 0.104, col = 'black', lwd = 0.3) +
+  geom_text(aes(x=-0.1, label="\nLATE = 0.104", y = 0.3), colour="black", angle=90, text=element_text(size=8)) +
+  geom_text(aes(x=0.234, label="\nLATE = 0.234", y = 0.3), colour="orange", angle=90, text=element_text(size=8)) +
+  scale_y_continuous(breaks = NULL) +
+  ggtitle('Increase LATE for same variance')
+grid.arrange(p1 , p2, ncol=2, top = "Distribution needed for 80% power on score-improved")
+```
+
+```{r score_difference}
+p1 <- ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 0.235, sd = 3.352), col = 'black') +
+  geom_vline(xintercept = 0.235 - 3.352, col = 'black', lwd = 0.3) +
+  geom_vline(xintercept = 0.235 + 3.352, col = 'black', lwd = 0.3) +
+  geom_text(aes(x=-1.7 , label="\nsigma = 3.352", y = 0.07), colour="black", angle=0, text=element_text(size=8)) +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 0.235, sd = 0.492), col = 'orange',
+                geom = "area", fill = "orange", alpha = .1) +
+  geom_vline(xintercept = 0.235 - 0.492, col = 'orange', lwd = 0.5, linetype="dashed") +
+  geom_vline(xintercept = 0.235 + 0.492, col = 'orange', lwd = 0.5, linetype="dashed") + ylab("") +
+  geom_text(aes(x=0, label="\nsigma = 0.492", y = 0.3), colour="orange", angle=0, text=element_text(size=8)) +
+  scale_y_continuous(breaks = NULL) +
+  ggtitle('Reduce Variance for same LATE')
+  
+p2 <- ggplot(data = data.frame(x = c(-7, 10)), aes(x)) +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 0.235, sd = 3.352), col = 'black') +
+  geom_vline(xintercept = 0.235, col = 'black', lwd = 0.3) +
+  geom_text(aes(x=-1, label="\nLATE = 0.235", y = 0.03), colour="black", angle=90, text=element_text(size=8)) +
+  stat_function(fun = dnorm, n = 138, args = list(mean = 1.599, sd = 3.352), col = 'orange',
+                geom = "area", fill = "orange", alpha = .1) + ylab("") +
+  geom_vline(xintercept = 1.599, col = 'orange', lwd = 0.5, linetype = "dashed") +
+  #geom_vline(xintercept = 1.599 - 3.352, col = 'orange', lwd = 1, linetype="dotted") +
+  #geom_vline(xintercept = 1.599 + 3.352, col = 'orange', lwd = 1, linetype="dotted") +
+  geom_text(aes(x=1.599, label="\nLATE = 1.599", y = 0.03), colour="orange", angle=90, text=element_text(size=8)) +
+  scale_y_continuous(breaks = NULL) +
+  ggtitle('Increase LATE for same variance')
+grid.arrange(p1, p2, ncol=2, top = "Distribution needed for 80% power on score-difference")
+```
+
+
+### Placebo test 
+
+Check if the treatment has an effect on the pre treatment score. Treatment should not have any impact on it.
+```{r}
+m0 <- reg(d[, lm(pre_treatment_score ~ treatment)],
+          title = 'Placebo Test Estimates of pre treatment score')
+
+
+```
+
+### Randomization/Covariate Balance Check
+
+```{r}
+# Covariate balance check for data
+m1 <- reg(d[, lm(as.numeric(treatment) ~  age + music_training + gender +  time_of_day )],
+          title = "Covariate Balance Check")
+
+d[, .N, by = .(gender, treatment)]
+d[gender == 'Male' & age == '22 - 55 years', .N, by = treatment]
+d[gender == 'Female' & music_training == '1-2 years of training' & age == '22 - 55 years', .N, by = treatment]
+d[gender == 'Female'  & age == '22 - 55 years', .N, by = treatment]
+```
+
+### Cobalt on Raw Data
+
+```{r}
+covs = subset(d, select = c(age, music_training, time_of_day, gender))
+bal.tab(covs, treat = d$treatment, binary = "std", continuous = "std")
+bal.plot(d$treatment ~ covs, var.name = "age") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+bal.plot(d$treatment ~ covs, var.name = "music_training") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+bal.plot(d$treatment ~ covs, var.name = "time_of_day") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+love.plot(d$treatment ~ covs, stats = c("mean.diffs"), abs = TRUE, binary = "std", var.order = "unadjusted")
+```
+```{r}
+gcount <- d[, Proportion := .N/138, by=.(treatment, gender)]
+gcount
+p<-ggplot(data=gcount, aes(x=gender, y= Proportion, fill = treatment)) +
+  geom_bar(stat="identity", color = 'black', position=position_dodge()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+p
+```
+
+## Using Score Improvement as Outcome Variable
+
+
+### Basic Model
+
+```{r scoreImprovement1, warning = FALSE}
+m0 <- reg(d[, lm(score_improved ~ treatment)], title = 'Basic Model:  score improvement ~ treatment')
+
+m1 <- reg(d[age == '5 - 21 years',lm(score_improved ~ treatment)], ptest = FALSE)
+m2 <- reg(d[age == '22 - 55 years',lm(score_improved ~ treatment)], ptest = FALSE)
+m3 <- reg(d[age == 'Older than 55 years',lm(score_improved ~ treatment)], ptest = FALSE)
+stargazer( m0$model, m1$model, m2$model, m3$model,
+ type = 'html',
+ title = 'Simple Treatment Effect of receiving a treatment',
+ se = list(sqrt(diag(vcovHC(m0$model))), sqrt(diag(vcovHC(m1$model))), sqrt(diag(vcovHC(m2$model))), sqrt(diag(vcovHC(m3$model)))),
+ column.labels = c("All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years"),
+ add.lines = list(c("Age Group:", "All", "5 - 21 years", "22 - 55 years", "Older than 55 years")),
+ dep.var.caption  = "Outcome Variable: score-improved",
+ dep.var.labels.include = FALSE
+ )
+```
+
+### Full Model
+
+```{r warning=FALSE}
+m0 <- reg(d[,lm(score_improved ~ treatment + music_training + time_of_day + treatment * time_of_day + gender + gender * treatment)])
+
+m1 <- reg(d[age == '5 - 21 years',lm(score_improved ~  treatment +   music_training + time_of_day + treatment * time_of_day + gender + gender * treatment)], ptest = FALSE)
+m2 <- reg(d[age == '22 - 55 years' ,lm(score_improved ~  treatment + music_training + time_of_day + treatment * time_of_day + gender + gender * treatment)], ptest = FALSE)
+m3 <- reg(d[age == 'Older than 55 years' ,lm(score_improved ~  treatment + music_training + time_of_day + treatment * time_of_day + gender + gender * treatment)], ptest = FALSE)
+stargazer( m0$model, m1$model, m2$model, m3$model,
+ type = 'html',
+ title = 'Long Model - Score Improved',
+ se = list(sqrt(diag(vcovHC(m0$model, type="HC1"))),
+           sqrt(diag(vcovHC(m1$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m2$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m3$model, type="HC1")))),
+ column.labels = c("All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years"),
+ add.lines = list(c("Model: ", "All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years")),
+ dep.var.caption  = "Outcome Variable: score-improved",
+ dep.var.labels.include = FALSE
+)
+```
+
+### without time_of_day treatment interaction
+
+```{r warning=FALSE}
+m0 <- reg(d[,lm(score_improved ~ treatment + music_training + time_of_day + gender + gender * treatment)])
+
+m1 <- reg(d[age == '5 - 21 years',lm(score_improved ~  treatment +   music_training + time_of_day + gender + gender * treatment)], ptest = FALSE)
+m2 <- reg(d[age == '22 - 55 years' ,lm(score_improved ~  treatment + music_training + time_of_day + gender + gender * treatment)], ptest = FALSE)
+m3 <- reg(d[age == 'Older than 55 years' ,lm(score_improved ~  treatment + music_training + time_of_day + gender + gender * treatment)], ptest = FALSE)
+stargazer( m0$model, m1$model, m2$model, m3$model,
+ type = 'html',
+ title = 'Long Model - Score Improved',
+ se = list(sqrt(diag(vcovHC(m0$model, type="HC1"))),
+           sqrt(diag(vcovHC(m1$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m2$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m3$model, type="HC1")))),
+ column.labels = c("All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years"),
+ add.lines = list(c("Model: ", "All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years")),
+ dep.var.caption  = "Outcome Variable: score-improved",
+ dep.var.labels.include = FALSE
+)
+```
+
+## Using score_differnece as Outcome Variable
+
+```{r warning=FALSE}
+m0 <- reg(d[, lm(score_difference ~ treatment)], title = 'Basic Model:  score differnece ~ treatment')
+#stargazer(m1$model, type='text')
+
+
+m1 <- reg(d[age == '5 - 21 years',lm(score_difference ~ treatment)], ptest = FALSE)
+m2 <- reg(d[age == '22 - 55 years',lm(score_difference ~ treatment)], ptest = FALSE)
+m3 <- reg(d[age == 'Older than 55 years',lm(score_difference ~ treatment)], ptest = FALSE)
+stargazer( m0$model, m1$model, m2$model, m3$model,
+ type = 'html',
+ title = 'Short Model - Score Difference',
+ se = list(sqrt(diag(vcovHC(m0$model, type = 'HC1'))), 
+           sqrt(diag(vcovHC(m1$model, type = 'HC1'))), 
+           sqrt(diag(vcovHC(m2$model, type = 'HC1'))), 
+           sqrt(diag(vcovHC(m3$model, type = 'HC1')))),
+ column.labels = c("All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years"),
+ add.lines = list(c("Age Group:", "All", "5 - 21 years", "22 - 55 years", "Older than 55 years")),
+ dep.var.caption  = "Outcome Variable: score-improved",
+ dep.var.labels.include = FALSE
+ )
+```
+
+### Score Diff - Full Model
+
+```{r warning=FALSE}
+m0 <- reg(d[,lm(score_difference ~  treatment +  music_training + time_of_day + treatment * time_of_day + gender + gender * treatment)])
+
+m1 <- reg(d[age == '5 - 21 years',lm(score_difference ~  treatment +  music_training + time_of_day + treatment * time_of_day + gender + gender * treatment)], ptest = FALSE)
+m2 <- reg(d[age == '22 - 55 years' ,lm(score_difference ~  treatment +  music_training + time_of_day + treatment * time_of_day + gender + gender * treatment )], ptest = FALSE)
+m3 <- reg(d[age == 'Older than 55 years' ,lm(score_difference ~  treatment +  music_training + time_of_day + treatment * time_of_day + gender + gender * treatment )], ptest = FALSE)
+stargazer( m0$model, m1$model, m2$model, m3$model,
+ type = 'html',
+ title = 'Long Model - Score Improved',
+ se = list(sqrt(diag(vcovHC(m0$model, type="HC1"))),
+           sqrt(diag(vcovHC(m1$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m2$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m3$model, type="HC1")))),
+ column.labels = c("All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years"),
+ add.lines = list(c("Model: ", "All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years")),
+ dep.var.caption  = "Outcome Variable: score-differnece",
+ dep.var.labels.include = FALSE
+)
+```
+
+### w.o interaction on time of day
+
+```{r warning=FALSE}
+m0 <- reg(d[,lm(score_difference ~  treatment +  music_training + time_of_day + gender + gender * treatment)])
+
+m1 <- reg(d[age == '5 - 21 years',lm(score_difference ~  treatment +  music_training + time_of_day + gender + gender * treatment)], ptest = FALSE)
+m2 <- reg(d[age == '22 - 55 years' ,lm(score_difference ~  treatment +  music_training + time_of_day + gender + gender * treatment )], ptest = FALSE)
+m3 <- reg(d[age == 'Older than 55 years' ,lm(score_difference ~  treatment +  music_training + time_of_day + gender + gender * treatment )], ptest = FALSE)
+stargazer( m0$model, m1$model, m2$model, m3$model,
+ type = 'html',
+ title = 'Long Model - Score Difference',
+ se = list(sqrt(diag(vcovHC(m0$model, type="HC1"))),
+           sqrt(diag(vcovHC(m1$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m2$model, type="HC1"))), 
+           sqrt(diag(vcovHC(m3$model, type="HC1")))),
+ column.labels = c("All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years"),
+ add.lines = list(c("Model: ", "All ages", "5 - 21 years", "22 - 55 years", "Older than 55 years")),
+ dep.var.caption  = "Outcome Variable: score-differnece",
+ dep.var.labels.include = FALSE
+)
+```
+
+### Attrition Effect
+
+Create a hypothetical data set of N/2 never takers that get a probability between 25 - 75 percentile for both treatment and control groups and
+see what type of treatment effect we would have seen.
+
+``` {r}
+responses = 138
+attr <- function(missing, responses) {
+  return (missing/(responses + missing))
+}
+
+cat('Overall Attrition:', attr(7, 138), 'to', attr(8, 138), '\n')
+cat('Differential Attrition: ', attr(0, 73) - attr(7, 73), '\n')
+```
+
+```{r}
+summary <- d[ ,.N, by = .(age, treatment)]
+summary[, treatment := as.numeric(treatment) - 1]
+summary[, control := 1 - treatment]
+summary
+
+m20 <- reg(summary[, lm(N ~ control)])
+```
