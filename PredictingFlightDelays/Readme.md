@@ -8,6 +8,6 @@ set for this project come in the form of two tables:
 
 * Flights table: This is a subset of the passenger flight's on-time performance data from 2015 to 2019, taken from the TranStats data collection available 
 from the U.S. Department of Transportation (DOT)
-* Waether table: A weather table  has been pre-downloaded from the National Oceanic and Atmospheric Administration repository  to S3 in the form of  parquet files
+* Weather table: A weather table  has been pre-downloaded from the National Oceanic and Atmospheric Administration repository  to S3 in the form of  parquet files
 
 The project will be using Spark in Databricks.
