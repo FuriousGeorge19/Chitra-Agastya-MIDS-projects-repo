@@ -11,3 +11,5 @@ from the U.S. Department of Transportation (DOT)
 * Weather table: A weather table  has been pre-downloaded from the National Oceanic and Atmospheric Administration repository  to S3 in the form of  parquet files
 
 The project will be using Spark in Databricks.
+
+The full html report of the project can be found in the attached html file. The ipynb file is the source for the report. Some of the graphs will show as tables as if viewed outside of databricks as they use the visualization embedded in databricks.
