@@ -12,4 +12,4 @@ from the U.S. Department of Transportation (DOT)
 
 The project will be using Spark in Databricks.
 
-The full html report of the project can be found in the attached html file. The ipynb file is the source for the report. Some of the graphs will show as tables as if viewed outside of databricks as they use the visualization embedded in databricks.
+The full html report of the project can be found in the attached html file. The ipynb file is the source for the report. Some of the graphs will show as tables as if the ipynb file is viewed outside of databricks as it uses the visualization embedded in databricks.
